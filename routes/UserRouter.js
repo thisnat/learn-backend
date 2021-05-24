@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const router = express.Router();
 
@@ -13,6 +14,43 @@ router.get('/',authenticateToken,(req, res) => {
             return next(error);
         } else {
             res.json(data);
+        }
+    })
+})
+
+//use bcrypt
+router.post('/',async (req, res) => {
+    try {
+        const hashedPassword = await bcrypt.hash(req.body.password,10);
+        req.body.password = hashedPassword;
+    } catch {
+        return res.status(500).send();
+    }
+
+    userSchema.create(req.body,(error, data) => {
+        if (error) {
+            return next(error);
+        } else {
+            res.json(data);
+        }
+    })
+})
+
+//check hashed password
+router.post('/check', (req, res) => {
+    userSchema.findOne({'user' : req.body.user}, async (error, data) => {
+        if (error) {
+            return next(error);
+        } else {
+            if (data === null) {
+                res.status(400).send('user not found');
+            } else {
+                if (await bcrypt.compare(req.body.password,data.password)){
+                    res.send('password correct !');
+                } else {
+                    res.send('incorrect password');
+                }
+            }
         }
     })
 })
